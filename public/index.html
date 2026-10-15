@@ -1,1 +1,54 @@
-:root{color-scheme:dark;--bg:#101010;--panel:#191919;--line:#39332e;--paper:#e9e1d4;--muted:#aaa094;--accent:#c8a46b;--red:#b9564c}*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#29231d 0,#101010 55%);color:var(--paper);font:16px/1.5 Georgia,"Times New Roman",serif;min-height:100vh}.topbar{display:flex;align-items:center;gap:24px;padding:20px clamp(18px,5vw,70px);border-bottom:1px solid var(--line);font-family:Arial,sans-serif}.brand{color:var(--paper);font-weight:900;letter-spacing:3px;text-decoration:none}.brand span{color:var(--accent)}.tagline,.eyebrow{font:700 10px/1.4 Arial,sans-serif;letter-spacing:2px;color:var(--accent)}.connection{margin-left:auto;font:12px Arial,sans-serif;color:var(--muted)}.layout{width:min(1100px,92vw);margin:40px auto}.intro{margin-bottom:30px}.intro h1{font-size:clamp(38px,6vw,64px);line-height:1.04;margin:10px 0}.intro h1 em{color:var(--accent)}.muted{color:var(--muted)}.case-panel{background:linear-gradient(145deg,#1c1b19,#151515);border:1px solid var(--line);padding:clamp(18px,4vw,38px);box-shadow:0 20px 60px #0006}.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid var(--line);padding-bottom:20px}.panel-heading h2{margin:5px 0;font-size:clamp(24px,4vw,36px)}.difficulty{border:1px solid var(--accent);padding:5px 10px;color:var(--accent);font:11px Arial,sans-serif;text-transform:uppercase}.story{color:#d4c8b7;max-width:760px;margin:22px 0 30px}.columns{display:grid;grid-template-columns:1fr 1fr;gap:32px}.columns h3,.verdict-form h3{font-size:19px;margin:0 0 14px}.suspect,.clue-button{width:100%;text-align:left;background:#201f1d;border:1px solid var(--line);color:var(--paper);padding:13px;margin:0 0 9px}.suspect strong{display:block}.suspect small{color:var(--muted)}.clue-button{cursor:pointer;font-family:inherit}.clue-button:hover,.clue-button:focus{border-color:var(--accent)}.clue-button:disabled{opacity:.55;cursor:default}.clue-detail{border-left:2px solid var(--accent);padding:12px;color:var(--muted);font-size:14px;min-height:55px}.verdict-form{margin-top:32px;padding-top:24px;border-top:1px solid var(--line)}label{display:block;color:var(--muted);font:12px Arial,sans-serif;margin:14px 0 7px}select{width:100%;padding:12px;background:#101010;color:var(--paper);border:1px solid var(--line);font:15px Georgia,serif}.evidence-choice{display:flex;flex-wrap:wrap;gap:8px}.evidence-choice label{margin:0;border:1px solid var(--line);padding:8px;display:flex;gap:7px;align-items:center}.evidence-choice input{accent-color:var(--accent)}button[type=submit]{margin-top:20px;background:var(--accent);color:#17130e;border:0;padding:13px 18px;font-weight:bold;letter-spacing:1px;cursor:pointer}.secondary{background:transparent;border:1px solid var(--line);color:var(--paper);padding:10px 14px;cursor:pointer}.footer-actions{display:flex;gap:10px;margin-top:18px}#result{font-weight:bold}.success{color:#8fd3a2}.failure{color:#e38a80}footer{text-align:center;color:#746b60;font:10px Arial,sans-serif;letter-spacing:2px;padding:30px}@media(max-width:700px){.topbar{flex-wrap:wrap;gap:10px}.tagline{order:3;width:100%}.columns{grid-template-columns:1fr}.layout{margin:24px auto}.panel-heading{align-items:flex-start}}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <title>MysteryBox — The Database Detective</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">MYSTERY<span>BOX</span></a>
+    <span class="tagline">THE DATABASE DETECTIVE</span>
+    <span id="connection" class="connection">Checking case files…</span>
+  </header>
+  <main class="layout">
+    <section class="intro">
+      <p class="eyebrow">CONFIDENTIAL // CASE ARCHIVE</p>
+      <h1>Every clue leaves<br><em>a trace.</em></h1>
+      <p class="muted">Inspect the evidence. Question the suspects. Deliver a verdict.</p>
+    </section>
+    <section class="case-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">ACTIVE INVESTIGATION</p><h2 id="case-title">Loading case…</h2></div>
+        <span id="difficulty" class="difficulty">—</span>
+      </div>
+      <p id="story" class="story"></p>
+      <div class="columns">
+        <section>
+          <h3>Suspect files</h3>
+          <div id="suspects" class="suspects"></div>
+        </section>
+        <section>
+          <h3>Evidence boxes</h3>
+          <div id="clues" class="clues"></div>
+          <div id="clue-detail" class="clue-detail" aria-live="polite">Open an evidence box to inspect its contents.</div>
+        </section>
+      </div>
+      <form id="verdict-form" class="verdict-form">
+        <h3>Submit your verdict</h3>
+        <label for="suspect-choice">Who did it?</label>
+        <select id="suspect-choice" required><option value="">Choose a suspect</option></select>
+        <label>Supporting evidence</label>
+        <div id="evidence-choice" class="evidence-choice"></div>
+        <button type="submit">SUBMIT VERDICT</button>
+        <p id="result" role="status" aria-live="polite"></p>
+      </form>
+      <div class="footer-actions"><button id="next-case" class="secondary" type="button">NEXT CASE →</button><button id="reset" class="secondary" type="button">RESET CASE</button></div>
+    </section>
+  </main>
+  <footer>CASE FILES ARE CLASSIFIED · INVESTIGATE WITH CARE</footer>
+</body>
+</html>
