@@ -1,112 +1,54 @@
-(() => {
-  const $ = id => document.getElementById(id);
-  let currentCaseId = 1;
-  let currentCase = null;
-  let unlocked = new Set();
-  const connection = $("connection");
-
-  async function api(url, options = {}) {
-    const response = await fetch(url, {
-      credentials: "same-origin",
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) },
-      ...options
-    });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(body.error || `Request failed (${response.status})`);
-    return body;
-  }
-
-  async function loadCase(caseId) {
-    try {
-      const data = await api("/api/game/start", {
-        method: "POST",
-        body: JSON.stringify({ caseId })
-      });
-      currentCaseId = caseId;
-      currentCase = data.case;
-      unlocked = new Set(data.progress.unlockedClues || []);
-      renderCase();
-      connection.textContent = "CASE ARCHIVE CONNECTED";
-      connection.style.color = "#8fd3a2";
-      $("result").textContent = "";
-    } catch (err) {
-      connection.textContent = "DATABASE CONNECTION ERROR";
-      connection.style.color = "#e38a80";
-      $("case-title").textContent = "Case files unavailable";
-      $("story").textContent = `${err.message}. Check the server logs and MongoDB connection settings.`;
-    }
-  }
-
-  function renderCase() {
-    $("case-title").textContent = `#${currentCase.caseId} — ${currentCase.title}`;
-    $("difficulty").textContent = currentCase.difficulty;
-    $("story").textContent = currentCase.story;
-    $("suspects").replaceChildren();
-    $("suspect-choice").replaceChildren(new Option("Choose a suspect", ""));
-    currentCase.suspects.forEach(s => {
-      const article = document.createElement("div");
-      article.className = "suspect";
-      const name = document.createElement("strong");
-      name.textContent = s.name;
-      const details = document.createElement("small");
-      details.textContent = `${s.occupation || "Suspect"} · “${s.statement || "No statement recorded."}”`;
-      article.append(name, details);
-      $("suspects").append(article);
-      $("suspect-choice").add(new Option(s.name, s.name));
-    });
-    $("clues").replaceChildren();
-    $("evidence-choice").replaceChildren();
-    currentCase.clues.forEach(clue => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "clue-button";
-      button.textContent = unlocked.has(clue.title) ? `✓ ${clue.title}` : `▣ ${clue.title}`;
-      button.addEventListener("click", () => revealClue(clue.title));
-      $("clues").append(button);
-      const label = document.createElement("label");
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.value = clue.title;
-      checkbox.disabled = !unlocked.has(clue.title);
-      label.append(checkbox, document.createTextNode(clue.title));
-      $("evidence-choice").append(label);
-    });
-    $("clue-detail").textContent = "Open an evidence box to inspect its contents.";
-  }
-
-  async function revealClue(title) {
-    try {
-      const data = await api("/api/game/clue", {
-        method: "POST",
-        body: JSON.stringify({ caseId: currentCaseId, clueTitle: title })
-      });
-      unlocked.add(title);
-      renderCase();
-      $("clue-detail").textContent = `${data.clue.title}: ${data.clue.description}`;
-    } catch (err) { $("result").textContent = err.message; }
-  }
-
-  $("verdict-form").addEventListener("submit", async event => {
-    event.preventDefault();
-    const suspect = $("suspect-choice").value;
-    const evidence = [...$("evidence-choice").querySelectorAll("input:checked")].map(el => el.value);
-    if (!suspect) return;
-    const button = $("verdict-form").querySelector('button[type="submit"]');
-    button.disabled = true;
-    try {
-      const result = await api("/api/game/accuse", {
-        method: "POST",
-        body: JSON.stringify({ caseId: currentCaseId, suspect, evidence })
-      });
-      $("result").className = result.correct ? "success" : "failure";
-      $("result").textContent = `${result.message} Score: ${result.score}% · Stars: ${result.stars} · Attempts left: ${result.attemptsRemaining}. ${result.explanation}`;
-    } catch (err) {
-      $("result").className = "failure";
-      $("result").textContent = err.message;
-    } finally { button.disabled = false; }
-  });
-
-  $("next-case").addEventListener("click", () => loadCase(currentCaseId >= 20 ? 1 : currentCaseId + 1));
-  $("reset").addEventListener("click", () => loadCase(currentCaseId));
-  loadCase(1);
-})();
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101010">
+  <title>MysteryBox — The Database Detective</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/">MYSTERY<span>BOX</span></a>
+    <span class="tagline">THE DATABASE DETECTIVE</span>
+    <span id="connection" class="connection">Checking case files…</span>
+  </header>
+  <main class="layout">
+    <section class="intro">
+      <p class="eyebrow">CONFIDENTIAL // CASE ARCHIVE</p>
+      <h1>Every clue leaves<br><em>a trace.</em></h1>
+      <p class="muted">Inspect the evidence. Question the suspects. Deliver a verdict.</p>
+    </section>
+    <section class="case-panel">
+      <div class="panel-heading">
+        <div><p class="eyebrow">ACTIVE INVESTIGATION</p><h2 id="case-title">Loading case…</h2></div>
+        <span id="difficulty" class="difficulty">—</span>
+      </div>
+      <p id="story" class="story"></p>
+      <div class="columns">
+        <section>
+          <h3>Suspect files</h3>
+          <div id="suspects" class="suspects"></div>
+        </section>
+        <section>
+          <h3>Evidence boxes</h3>
+          <div id="clues" class="clues"></div>
+          <div id="clue-detail" class="clue-detail" aria-live="polite">Open an evidence box to inspect its contents.</div>
+        </section>
+      </div>
+      <form id="verdict-form" class="verdict-form">
+        <h3>Submit your verdict</h3>
+        <label for="suspect-choice">Who did it?</label>
+        <select id="suspect-choice" required><option value="">Choose a suspect</option></select>
+        <label>Supporting evidence</label>
+        <div id="evidence-choice" class="evidence-choice"></div>
+        <button type="submit">SUBMIT VERDICT</button>
+        <p id="result" role="status" aria-live="polite"></p>
+      </form>
+      <div class="footer-actions"><button id="next-case" class="secondary" type="button">NEXT CASE →</button><button id="reset" class="secondary" type="button">RESET CASE</button></div>
+    </section>
+  </main>
+  <footer>CASE FILES ARE CLASSIFIED · INVESTIGATE WITH CARE</footer>
+</body>
+</html>
