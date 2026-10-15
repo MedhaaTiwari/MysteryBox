@@ -1,0 +1,20 @@
+{
+  "name": "mysterybox",
+  "version": "2.0.0",
+  "description": "A browser-based detective deduction game with MongoDB-backed sessions and game data.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": "20.x"
+  },
+  "dependencies": {
+    "connect-mongo": "5.1.0",
+    "dotenv": "16.4.7",
+    "express": "4.21.2",
+    "express-session": "1.18.1",
+    "mongoose": "8.9.5"
+  }
+}
